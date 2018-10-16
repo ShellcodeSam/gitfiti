@@ -17,7 +17,8 @@ Since this is likely to clobber repo's history, I highly recommend that you crea
 Included "art" from left to right: kitty, oneup, oneup2, hackerschool, octocat, octocat2
 
 ### Text:
-![alt text](https://raw.github.com/shellcodesam/gitfiti-text/master/github-screenshot2.png "text")
+![alt text](https://raw.github.com/shellcodesam/gitfiti-text/master/github-screenshot2.png "text")  
+
 Example of the script used to write arbitrary text with arbitrary fonts.  
 
 ### Usage:
