@@ -210,6 +210,7 @@ def generate_image_from_message(msg='Hello!', font="7x7.ttf", font_size=8, font_
     # L because we only need 8-bit black and white
     img = Image.new('L', (W, H), 'white')
 
+    # use PIL to 'draw' the font text onto a canvas and query it for pixel values without saving it
     draw = ImageDraw.Draw(img)
     if font_is_bitmap:
         font = ImageFont.load('fonts/'+font)
@@ -219,13 +220,15 @@ def generate_image_from_message(msg='Hello!', font="7x7.ttf", font_size=8, font_
     center_pos = (0, (H-h))
     draw.text(center_pos, msg, (0), font=font)
     image_matrix = [[[] for i in range(W)] for i in range(H)]
+    # translate pixel color values (range 0-255) into gitfiti values (0-4)
     for y in range(H):
         for x in range(W):
             image_matrix[y][x] = math.ceil(
                 (255-img.getpixel((x, y)))/math.ceil(255.0/4.0))
 
+    # sanity check warning just in case the input message seems longer than max-width
     if w >= W:
-        print("\nWARNING!\n Your message with this font exceeds GitHub commit history max width.\n Your results are likely to be less than satisfactory.\nWARNING!")
+        print("\nWARNING!\n Your message with this font seems to exceed GitHub commit history max width.\n Your results might be less than satisfactory.\nWARNING!")
 
     return image_matrix
 
