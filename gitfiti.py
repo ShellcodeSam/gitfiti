@@ -3,12 +3,16 @@
 # Copyright (c) 2013 Eric Romano (@gelstudios)
 # released under The MIT license (MIT) http://opensource.org/licenses/MIT
 #
+# Modified by Peter Samuel Anttila (@samuelanttila) in 2018 to include arbitrary text support
 """
 gitfiti
 
 noun : Carefully crafted graffiti in a GitHub commit history calendar
 """
-
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
+import math
 from datetime import datetime, timedelta
 import itertools
 import json
@@ -45,117 +49,118 @@ TITLE = '''
 
 
 KITTY = [
-  [0,0,0,4,0,0,0,0,4,0,0,0],
-  [0,0,4,2,4,4,4,4,2,4,0,0],
-  [0,0,4,2,2,2,2,2,2,4,0,0],
-  [2,2,4,2,4,2,2,4,2,4,2,2],
-  [0,0,4,2,2,3,3,2,2,4,0,0],
-  [2,2,4,2,2,2,2,2,2,4,2,2],
-  [0,0,0,3,4,4,4,4,3,0,0,0],
+    [0, 0, 0, 4, 0, 0, 0, 0, 4, 0, 0, 0],
+    [0, 0, 4, 2, 4, 4, 4, 4, 2, 4, 0, 0],
+    [0, 0, 4, 2, 2, 2, 2, 2, 2, 4, 0, 0],
+    [2, 2, 4, 2, 4, 2, 2, 4, 2, 4, 2, 2],
+    [0, 0, 4, 2, 2, 3, 3, 2, 2, 4, 0, 0],
+    [2, 2, 4, 2, 2, 2, 2, 2, 2, 4, 2, 2],
+    [0, 0, 0, 3, 4, 4, 4, 4, 3, 0, 0, 0],
 ]
 
 ONEUP = [
-  [0,4,4,4,4,4,4,4,0],
-  [4,3,2,2,1,2,2,3,4],
-  [4,2,2,1,1,1,2,2,4],
-  [4,3,4,4,4,4,4,3,4],
-  [4,4,1,4,1,4,1,4,4],
-  [0,4,1,1,1,1,1,4,0],
-  [0,0,4,4,4,4,4,0,0],
+    [0, 4, 4, 4, 4, 4, 4, 4, 0],
+    [4, 3, 2, 2, 1, 2, 2, 3, 4],
+    [4, 2, 2, 1, 1, 1, 2, 2, 4],
+    [4, 3, 4, 4, 4, 4, 4, 3, 4],
+    [4, 4, 1, 4, 1, 4, 1, 4, 4],
+    [0, 4, 1, 1, 1, 1, 1, 4, 0],
+    [0, 0, 4, 4, 4, 4, 4, 0, 0],
 ]
 
 ONEUP2 = [
-  [0,0,4,4,4,4,4,4,4,0,0],
-  [0,4,2,2,1,1,1,2,2,4,0],
-  [4,3,2,2,1,1,1,2,2,3,4],
-  [4,3,3,4,4,4,4,4,3,3,4],
-  [0,4,4,1,4,1,4,1,4,4,0],
-  [0,0,4,1,1,1,1,1,4,0,0],
-  [0,0,0,4,4,4,4,4,0,0,0],
+    [0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0],
+    [0, 4, 2, 2, 1, 1, 1, 2, 2, 4, 0],
+    [4, 3, 2, 2, 1, 1, 1, 2, 2, 3, 4],
+    [4, 3, 3, 4, 4, 4, 4, 4, 3, 3, 4],
+    [0, 4, 4, 1, 4, 1, 4, 1, 4, 4, 0],
+    [0, 0, 4, 1, 1, 1, 1, 1, 4, 0, 0],
+    [0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0],
 ]
 
 HACKERSCHOOL = [
-  [4,4,4,4,4,4],
-  [4,3,3,3,3,4],
-  [4,1,3,3,1,4],
-  [4,3,3,3,3,4],
-  [4,4,4,4,4,4],
-  [0,0,4,4,0,0],
-  [4,4,4,4,4,4],
+    [4, 4, 4, 4, 4, 4],
+    [4, 3, 3, 3, 3, 4],
+    [4, 1, 3, 3, 1, 4],
+    [4, 3, 3, 3, 3, 4],
+    [4, 4, 4, 4, 4, 4],
+    [0, 0, 4, 4, 0, 0],
+    [4, 4, 4, 4, 4, 4],
 ]
 
 OCTOCAT = [
-  [0,0,0,4,0,0,0,4,0],
-  [0,0,4,4,4,4,4,4,4],
-  [0,0,4,1,3,3,3,1,4],
-  [4,0,3,4,3,3,3,4,3],
-  [0,4,0,0,4,4,4,0,0],
-  [0,0,4,4,4,4,4,4,4],
-  [0,0,4,0,4,0,4,0,4],
+    [0, 0, 0, 4, 0, 0, 0, 4, 0],
+    [0, 0, 4, 4, 4, 4, 4, 4, 4],
+    [0, 0, 4, 1, 3, 3, 3, 1, 4],
+    [4, 0, 3, 4, 3, 3, 3, 4, 3],
+    [0, 4, 0, 0, 4, 4, 4, 0, 0],
+    [0, 0, 4, 4, 4, 4, 4, 4, 4],
+    [0, 0, 4, 0, 4, 0, 4, 0, 4],
 ]
 
 OCTOCAT2 = [
-  [0,0,4,0,0,4,0],
-  [0,4,4,4,4,4,4],
-  [0,4,1,3,3,1,4],
-  [0,4,4,4,4,4,4],
-  [4,0,0,4,4,0,0],
-  [0,4,4,4,4,4,0],
-  [0,0,0,4,4,4,0],
+    [0, 0, 4, 0, 0, 4, 0],
+    [0, 4, 4, 4, 4, 4, 4],
+    [0, 4, 1, 3, 3, 1, 4],
+    [0, 4, 4, 4, 4, 4, 4],
+    [4, 0, 0, 4, 4, 0, 0],
+    [0, 4, 4, 4, 4, 4, 0],
+    [0, 0, 0, 4, 4, 4, 0],
 ]
 
 HELLO = [
-  [0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,4],
-  [0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,4],
-  [0,3,3,3,0,2,3,3,0,3,0,3,0,1,3,1,0,3],
-  [0,4,0,4,0,4,0,4,0,4,0,4,0,4,0,4,0,3],
-  [0,3,0,3,0,3,3,3,0,3,0,3,0,3,0,3,0,2],
-  [0,2,0,2,0,2,0,0,0,2,0,2,0,2,0,2,0,0],
-  [0,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,4],
+    [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 4],
+    [0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 4],
+    [0, 3, 3, 3, 0, 2, 3, 3, 0, 3, 0, 3, 0, 1, 3, 1, 0, 3],
+    [0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 3],
+    [0, 3, 0, 3, 0, 3, 3, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 2],
+    [0, 2, 0, 2, 0, 2, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0],
+    [0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 4],
 ]
 
 HIREME = [
-  [1,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [3,3,3,0,2,0,3,3,3,0,2,3,3,0,0,3,3,0,3,0,0,2,3,3],
-  [4,0,4,0,4,0,4,0,0,0,4,0,4,0,0,4,0,4,0,4,0,4,0,4],
-  [3,0,3,0,3,0,3,0,0,0,3,3,3,0,0,3,0,3,0,3,0,3,3,3],
-  [2,0,2,0,2,0,2,0,0,0,2,0,0,0,0,2,0,2,0,2,0,2,0,0],
-  [1,0,1,0,1,0,1,0,0,0,1,1,1,0,0,1,0,1,0,1,0,1,1,1],
+    [1, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [3, 3, 3, 0, 2, 0, 3, 3, 3, 0, 2, 3, 3, 0, 0, 3, 3, 0, 3, 0, 0, 2, 3, 3],
+    [4, 0, 4, 0, 4, 0, 4, 0, 0, 0, 4, 0, 4, 0, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4],
+    [3, 0, 3, 0, 3, 0, 3, 0, 0, 0, 3, 3, 3, 0, 0, 3, 0, 3, 0, 3, 0, 3, 3, 3],
+    [2, 0, 2, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 2, 0, 2, 0, 2, 0, 0],
+    [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
 ]
 
 BEER = [
-  [0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,3,3,0,0],
-  [0,0,1,1,1,1,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [0,2,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [2,0,2,2,2,2,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,3,3,0,0],
-  [2,0,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,3,0,0],
-  [0,2,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [0,0,2,2,2,2,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,0,0,3,0],
+    [0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 3, 3, 3, 0, 3, 3, 3, 0, 0],
+    [0, 0, 1, 1, 1, 1, 0, 3, 0, 0, 3, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 3, 0],
+    [0, 2, 2, 2, 2, 2, 0, 3, 0, 0, 3, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 3, 0],
+    [2, 0, 2, 2, 2, 2, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 3, 3, 3, 0, 3, 3, 3, 0, 0],
+    [2, 0, 2, 2, 2, 2, 0, 3, 0, 0, 3, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 3, 0, 0],
+    [0, 2, 2, 2, 2, 2, 0, 3, 0, 0, 3, 0, 3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 3, 0],
+    [0, 0, 2, 2, 2, 2, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 3, 3, 3, 0, 3, 0, 0, 3, 0],
 ]
 
 GLIDERS = [
-  [0,0,0,4,0,4,0,0,0,0,4,0,0,0],
-  [0,4,0,4,0,0,4,4,0,0,0,4,0,0],
-  [0,0,4,4,0,4,4,0,0,4,4,4,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,4,0,4,0,0,0,4,0,0,0,0,0,0],
-  [0,0,4,4,0,4,0,4,0,0,0,0,0,0],
-  [0,0,4,0,0,0,4,4,0,0,0,0,0,0],
+    [0, 0, 0, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 0],
+    [0, 4, 0, 4, 0, 0, 4, 4, 0, 0, 0, 4, 0, 0],
+    [0, 0, 4, 4, 0, 4, 4, 0, 0, 4, 4, 4, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 4, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0],
+    [0, 0, 4, 4, 0, 4, 0, 4, 0, 0, 0, 0, 0, 0],
+    [0, 0, 4, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0],
 ]
 
 ASCII_TO_NUMBER = {
-  '_': 0,
-  '_': 1,
-  '~': 2,
-  '=': 3,
-  '*': 4,
+    '_': 0,
+    '_': 1,
+    '~': 2,
+    '=': 3,
+    '*': 4,
 }
 
 
 def str_to_sprite(content):
     # Break out lines and filter any excess
     lines = content.split('\n')
+
     def is_empty_line(line):
         return len(line) != 0
     lines = filter(is_empty_line, lines)
@@ -184,18 +189,74 @@ ONEUP_STR = str_to_sprite('''
 
 
 IMAGES = {
-  'kitty': KITTY,
-  'oneup': ONEUP,
-  'oneup2': ONEUP2,
-  'hackerschool': HACKERSCHOOL,
-  'octocat': OCTOCAT,
-  'octocat2': OCTOCAT2,
-  'hello': HELLO,
-  'hireme': HIREME,
-  'oneup_str': ONEUP_STR,
-  'beer': BEER,
-  'gliders': GLIDERS,
+    'kitty': KITTY,
+    'oneup': ONEUP,
+    'oneup2': ONEUP2,
+    'hackerschool': HACKERSCHOOL,
+    'octocat': OCTOCAT,
+    'octocat2': OCTOCAT2,
+    'hello': HELLO,
+    'hireme': HIREME,
+    'oneup_str': ONEUP_STR,
+    'beer': BEER,
+    'gliders': GLIDERS,
 }
+
+
+def generate_image_from_message(msg='Hello!', font="7x7.ttf", font_size=8, font_is_bitmap=False):
+    W = 52  # width of git commit history
+    H = 7  # height of git commit history
+
+    # L because we only need 8-bit black and white
+    img = Image.new('L', (W, H), 'white')
+
+    draw = ImageDraw.Draw(img)
+    if font_is_bitmap:
+        font = ImageFont.load('fonts/'+font)
+    else:
+        font = ImageFont.truetype('fonts/'+font, font_size)
+    w, h = font.getsize(msg)
+    center_pos = (0, (H-h))
+    draw.text(center_pos, msg, (0), font=font)
+    image_matrix = [[[] for i in range(W)] for i in range(H)]
+    for y in range(H):
+        for x in range(W):
+            image_matrix[y][x] = math.ceil(
+                (255-img.getpixel((x, y)))/math.ceil(255.0/4.0))
+
+    if w >= W:
+        print("\nWARNING!\n Your message with this font exceeds GitHub commit history max width.\n Your results are likely to be less than satisfactory.\nWARNING!")
+
+    return image_matrix
+
+
+def print_commit_image_preview(image_matrix,offset):
+    W = 52
+    H = 7
+    print("Commit image preview (WITH offset):")
+    print('+'+'-'*W+'+')
+    for y in range(H):
+        print('|',end='')
+        for x in range(W):
+            if x>=offset and x < len(image_matrix[y]):
+                val = image_matrix[y][x-offset]
+                if(val == 0):
+                    print(' ', end='')
+                else:
+                    if val == 1:
+                        print('_', end='')
+                    elif val == 2:
+                        print('~', end='')
+                    elif val == 3:
+                        print('=', end='')
+                    else:
+                        print('*', end='')
+            else:
+                print(' ', end='')
+        print("|")  # newline
+    print('+'+'-'*W+'+')
+    print('Image should fit within the preview frame neatly.')
+    print("")
 
 
 def load_images(img_names):
@@ -329,7 +390,7 @@ def fake_it(image, start_date, username, repo, git_url, offset=0, multiplier=1):
 
     strings = []
     for value, date in zip(generate_values_in_date_order(image, multiplier),
-            generate_next_dates(start_date, offset)):
+                           generate_next_dates(start_date, offset)):
         for _ in range(value):
             strings.append(commit(date))
 
@@ -340,7 +401,7 @@ def save(output, filename):
     """Saves the list to a given filename"""
     with open(filename, 'w') as f:
         f.write(output)
-    os.chmod(filename, 0o755) # add execute permissions
+    os.chmod(filename, 0o755)  # add execute permissions
 
 
 def request_user_input(prompt='> '):
@@ -358,7 +419,8 @@ def main():
 
     git_base = ghe if ghe else GITHUB_BASE_URL
 
-    contributions_calendar = retrieve_contributions_calendar(username, git_base)
+    contributions_calendar = retrieve_contributions_calendar(
+        username, git_base)
 
     max_daily_commits = find_max_daily_commits(contributions_calendar)
 
@@ -386,25 +448,46 @@ def main():
 
     match = m if (match == 'gitfiti') else 1
 
-    print('Enter file(s) to load images from (blank if not applicable)')
-    img_names = request_user_input().split(' ')
-
-    loaded_images = load_images(img_names)
-    images = dict(IMAGES, **loaded_images)
-
-    print('Enter the image name to gitfiti')
-    print('Images: ' + ', '.join(images.keys()))
-    image = request_user_input()
-
-    image_name_fallback = FALLBACK_IMAGE
-
-    if not image:
-        image = IMAGES[image_name_fallback]
+    image_or_text = request_user_input(
+        'Do you want to use text instead of an image? [yes/NO]: ')
+    if image_or_text and image_or_text.lower()[0] == 'y':
+        msg = request_user_input(
+            'What message do you want to write? (7-8 chars max): ')
+        msg = msg.strip()
+        font_selection = request_user_input(
+            'Which font do you want to use? (press enter for default: 7x7.ttf): ')
+        if not font_selection.strip():
+            font_choice = '7x7.ttf'
+            font_size = 8
+            font_bitmap_yn = 'n'
+        else:
+            font_choice = font_selection.strip()
+            font_size = int(request_user_input(
+                'Which font size do you want to use? (press enter for default: 8): '))
+            font_bitmap_yn = request_user_input(
+                'Is your font a bitmap font? [yes/NO]: ')
+        image = generate_image_from_message(
+            msg=msg, font=font_choice, font_size=font_size, font_is_bitmap=(font_bitmap_yn and font_bitmap_yn.lower()[0] == 'y'))
     else:
-        try:
-            image = images[image]
-        except:
+        print('Enter file(s) to load images from (blank if not applicable)')
+        img_names = request_user_input().split(' ')
+
+        loaded_images = load_images(img_names)
+        images = dict(IMAGES, **loaded_images)
+
+        print('Enter the image name to gitfiti')
+        print('Images: ' + ', '.join(images.keys()))
+        image = request_user_input()
+
+        image_name_fallback = FALLBACK_IMAGE
+
+        if not image:
             image = IMAGES[image_name_fallback]
+        else:
+            try:
+                image = images[image]
+            except:
+                image = IMAGES[image_name_fallback]
 
     start_date = get_start_date()
     fake_it_multiplier = m * match
@@ -412,14 +495,23 @@ def main():
     if not ghe:
         git_url = 'git@github.com'
     else:
-        git_url = request_user_input('Enter Git URL like git@site.github.com: ')
+        git_url = request_user_input(
+            'Enter Git URL like git@site.github.com: ')
 
     output = fake_it(image, start_date, username, repo, git_url, offset,
                      fake_it_multiplier)
 
-    save(output, 'gitfiti.sh')
-    print('gitfiti.sh saved.')
-    print('Create a new(!) repo named {0} at {1} and run the script'.format(repo, git_base))
+    print_commit_image_preview(image,offset)
+    proceed_yn = request_user_input(
+            "Does the above preview look okay? We'll cancel if not. [yes/NO]: ")
+
+    if proceed_yn and proceed_yn.lower()[0] == 'y':
+        save(output, 'gitfiti.sh')
+        print('gitfiti.sh saved.')
+        print('Create a new(!) repo named {0} at {1} and run the script'.format(
+            repo, git_base))
+    else:
+        print("Run the script again.")
 
 
 if __name__ == '__main__':

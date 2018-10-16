@@ -16,6 +16,10 @@ Since this is likely to clobber repo's history, I highly recommend that you crea
 ![alt text](https://raw.github.com/gelstudios/gitfiti/master/pixels-large.png "pixel art")  
 Included "art" from left to right: kitty, oneup, oneup2, hackerschool, octocat, octocat2
 
+### Text:
+![alt text](https://raw.github.com/shellcodesam/gitfiti-text/master/github-screenshot2.png "text")
+Example of the script used to write arbitrary text with arbitrary fonts.  
+
 ### Usage:
 1. Create a new github repo to store your handiwork.
 2. Run `gitfiti.py` and follow the prompts for username, art selection, offset, and repo name.
@@ -59,7 +63,7 @@ gitfiti is released under [The MIT license (MIT)](http://opensource.org/licenses
 - ~~Web interface~~ See several web-based things below
 - ~~Load "art" from a file~~ [_thanks empathetic-alligator_](https://github.com/empathetic-alligator)
 - Load commit content from a file
-- Text/alphabet option
+- ~~Text/alphabet option~~ _Thanks, me!_
 - ...
 - Profit?
 

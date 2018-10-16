@@ -1,2 +1,7 @@
 *.pyc
 gitfiti.sh
+.idea
+.idea/**
+*.iml
+.vscode
+.vscode/**
